@@ -1,0 +1,151 @@
+Inside of the account app, we can make the model.
+For that we import BaseManager and AbstractBaseUser
+
+AbstractBaseUser is the class which import models.Model which have fields like:
+    password
+    last user login
+    is active
+
+    Inside Meta class, abstract is set to True so the table for this won't be made when we inherit.
+
+    Different functions like 
+        save() 
+        get_username() -- here we decide our own username field, 
+        clean()
+        natural_key()
+        is_anoynomous()
+        is_authenticated()      -- can be used in template too.
+        set_password()
+        check_password()
+
+
+------------------------------------------------------------------------------------------------------------
+
+When we make the custom user, then we must enter three fields:
+    is_active
+    is_staff
+    is_superuser
+
+------------------------------------------------------------------------------------------------------------
+
+By default when we login we use username and password.
+But we want to change this functionality to email and password
+
+For that we need to """change USERNAME_FIELD"""
+    USERNAME_FIELD = 'email'
+    
+------------------------------------------------------------------------------------------------------------
+
+We would define the methods like __str__(), has_perm() and has_module_perm() inside of the model.
+
+If you want to use Django’s full permissions framework (groups, specific permissions, admin integration), use PermissionsMixin
+
+------------------------------------------------------------------------------------------------------------
+
+The table that will now be created will be inside the account/user. 
+The table that we will be made inside ""account/user"" will contain the fields that we mentioned.
+When custom user was not used, it would be made inside the ""auth/user"". 
+But now it will be inside account/user
+Even the superuser that we create will be inside the account/user table
+
+For that we would need to make the ""model Manager"" so that we can define our own functions along with overwriting of the previous functions that we mentioned in manager BaseManager
+
+------------------------------------------------------------------------------------------------------------
+
+For making the manager -- UserManager(BaseManager) we define the class UserManager inheriting BaseManager
+
+    For creating a simple user, we call the function create_user()
+
+    For providing the access for the staff and superuser, we call the function create_superuser()
+
+    After defining this function we need to tell our ""model to use the manager"" that we defined:
+            objects = UserManager()
+
+------------------------------------------------------------------------------------------------------------
+
+After defining this User model, we should not carry out the migrations.
+We have not configured the model in settings.py file. 
+For that we need to tell settings.py file that we would be using the custom user instead of the user model that django provides
+
+For that go to settings.py file and at the end:
+
+    AUTH_USER_MODEL = 'account.User'
+
+------------------------------------------------------------------------------------------------------------
+
+Now we can migrate to the database.
+
+Doing this we can see that, inside of db_sqlite file, there would not be the table ""auth_user"". 
+Instead of that, there would be a table named ""account_user""
+
+This means that we have developed the User table based on the custom model that we created instead of the default one.
+
+So the user that will be created now will be stored in account_user table now.
+
+Some of the fields like last_login will get inherited even if we didn't define it in our model.
+
+------------------------------------------------------------------------------------------------------------
+
+Now if we create the superuser, then it will ask for the email instead of username because we set
+        USERNAME_FIELD = 'email'
+
+    Also we modified the managers methods.
+    So basically we override the functions like "create_user" and "create_superuser" which was defined inside of the manager that we inherited.
+
+    """BaseUserManager is the manager for the class AbstractBaseUser""". So that manager will be inherited as the manager.
+
+    Due to this, the functions which will be called when we carry out:
+        python manage.py createsuperuser
+    The functions that is defined inside manager we defined will automatically get called when a superuser or a user is created. We just override those functions.
+
+    The overridden methods create_superuser will now be called and changes are made on that basis.
+
+    When createsuperuser() is called, then the fields like is_customer, is_seller, is_staff and is_superuser will be set to 1 as defined
+
+    We can see this in database after creating the superuser.
+
+------------------------------------------------------------------------------------------------------------
+
+In the function that we defined, i.e create_superuser function, we didn't set ""is_active"" to be True.
+So using the credentials that we have while creating superuser, we won't be able to access the admin panel.
+
+We can also see that in the database table account_user, ""is_active field is set to 0""
+That means the user is not active at the moment.
+
+Besides of the admin panel, until the user is active, it won't be able to access other simple pages too.
+
+So to access the admin panel, set is_active to be True.
+For that access the shell.
+    python manage.py shell
+
+    from account.models import User
+    user = User.objects.get(email="admin@example.com")
+    user.is_active = True
+    user.save()
+
+This will set the is_active. Now we will be able to access the admin panel.
+Register the model in admin.py file.
+
+This is a good thing to do.
+It is because we need to access the database directly to make changes to the is_active field.
+
+Even if by some means, superuser is created from the frontend, then also the admin panel will not be able to be accessed. 
+This makes the data to be more secure.
+
+It provides the extra protection from the outside user but the burden when we want to create user that want to access admin panel.
+But it is a good thing to do.
+
+------------------------------------------------------------------------------------------------------------
+
+After configuring the admin.py file, if we add the user using the admin panel, then the user will be inserted like for the case that we defined while creating the model. So they will be customer and seller but not superuser, staff or active
+
+To access the admin panel, the user should have credentials like
+
+| is_active  | is_staff | is_superuser | Admin Access   | Notes  
+| ✅        | ✅       | ❌           | ✅            | Needs assigned permissions to do anything useful |
+| ✅        | ✅       | ✅           | ✅            | Full admin rights                                |
+| ✅        | ❌       | ✅           | ❌            | Can't log in to admin despite superuser          |
+| ❌        | ✅ or ❌ | ✅ or ❌    | ❌            | Can't log in if not active                       |
+
+
+------------------------------------------------------------------------------------------------------------

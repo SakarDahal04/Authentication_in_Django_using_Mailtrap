@@ -1,0 +1,19 @@
+This will be one complete authentication system.
+
+This will contain
+    one homepage    
+    one registration page -- from where we send the email to the activation mail you register from from which you can activate the account and login into the account.
+    one login page -- 
+    two dashboard based on the authentication of the user --  customer or seller
+    password change page and reset the password based on the email
+    
+This will use the function based view.
+
+Make UI for all of the html pages and then start working on the authentication part
+
+We need to decide at first if we want the user model that django provides or to make the custom user model for the user.
+It has to be done before the migration is done for any of the user.
+
+At the first regsitration, each of the user will be logged in as the customer. 
+Later by application, he/she can be upgraded to the seller.
+

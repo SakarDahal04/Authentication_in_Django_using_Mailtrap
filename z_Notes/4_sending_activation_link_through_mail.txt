@@ -1,0 +1,280 @@
+Here this functionality will be done by sending email using Mailtrap.
+
+For this we need to go to the views.py file.
+
+After saving the user in the database, 
+    user.save()
+
+    we will be sending the activation link to set is_active to be true. 
+    This will allow the user to access different pages of the site. 
+
+----------------------------------------------------------------------------------------------------------------
+
+To carry out this functionality, we would be needing ""one uid and one token"".
+This will be provided by django with the help of a function.
+
+For the user that is trying to activate the account, on that user basis we will be generating the uid and the token.
+
+----------------------------------------------------------------------------------------------------------------
+
+For this import:
+
+    from django.conf import settings
+    from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+    from django.utils.encoding import force_bytes, force_str
+    from django.contrib.auth.tokens import default_token_generator
+
+----------------------------------------------------------------------------------------------------------------
+
+At first catch the pk of the user i.e user and then generate uid on the basis of the id of the user.
+
+    uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+
+        --> The pk of the user is taken. 
+        --> Then it is converted to the bytes.
+        --> Then it is encoded.
+
+----------------------------------------------------------------------------------------------------------------
+
+On the basis of the same user generated, generate the token using default_token_generator.
+        
+    token = default_token_generator.make_token(user)
+
+        --> The token is generated using module default_token_generator which has method make_token() where user is passed
+
+    When the token is generated, if someone tries to change the token, the information about the user will be changed, making it a valid mechanism for tracking the user.
+
+----------------------------------------------------------------------------------------------------------------
+
+On the basis of the uid and the token that we generated, an activation link is generated. 
+
+        activation_link = reverse('activate', kwargs={'uidb64': uidb64, 'token': token})
+
+    When we carry out this reverse, the url with name="activate" will be taken and then will append uidb64 and token after /. That is 
+        activate_url/<uidb64>/<token> with their respective value
+
+----------------------------------------------------------------------------------------------------------------
+
+On the basis of the activation link, we will ""use it in the generation of the activation url"" which will then be mentioned in the mail which is sent to the user for the registration.
+
+    We would want the ""site domain to get attached to the like at the beginning of link"" so the user can directly come to the site. So basically, ""activation url is basically the domain name + the activation link"".
+
+    The 'activate' in reverse will be configured later on below. This will be the path for the view to activate the account when user click on activation link in email.
+
+        This wouldn't have the domain name. So append it here by defining SITE_DOMAIN inside settings.py file.
+
+            activation_url = f"{settings.SITE_DOMAIN}{activation_link}"
+
+        
+        This settings.SITE_DOMAIN is to be configured in the settings.py file:
+            SITE_DOMAIN = 'http://127.0.0.1:8000/'
+
+----------------------------------------------------------------------------------------------------------------
+
+Now we will be sending the mail. Here a function called ""send_mail"" can be used.
+
+    We will be using the threads so that the operations can be done faster and won't take that much time.
+
+    For this functionality, make "utils.py file in account app".
+
+    We will be calling the function inside that file where email of the user and the activation url to be sent as an argument.
+        send_activation_email(recipient_email, activation_url)
+
+    This function will be inside utils.py and will be call from views.py.
+
+    Inside this function, we will be defining the content of the form:
+        - subject
+        - from_email field
+        - to_email field
+
+----------------------------------------------------------------------------------------------------------------
+
+After making the content of the email, we need to convert the template into the string.
+    For that render_to_string() function is to be used. This will take arguments like:
+        - path of the template
+        - extra information that is to be passed in the template
+
+    html_content = render_to_string('account/activation_email.html', {'activation_url': activation_url})
+
+    This can now be passed as the 
+        EmailMessage - for sending the simple content -- cannot send either plain text or HTML
+        EmailMultiAlternatives - for sending the content with multipart form data
+                                 - send both text + HTML in one email
+
+----------------------------------------------------------------------------------------------------------------
+
+Every recipient side of the user doesn't have the ability to accept the html content. Some of the recipient side may not support HTML.
+
+        text_content = strip_tags(html_content)
+
+    So for that case, we need to ""generate the text_content"" which removes all the html tags and generate a plain text.
+
+    So when we send the data using EmailMultiAlternatives, text_content will be the fallback part of the content which is received by the email in the recipient end.
+
+    If the HTML is supported, the html content will be shown. 
+    Otherwise the plain content will be shown where the buttons and other things like anchor tag will be shown as link
+
+When you send an email using EmailMultiAlternatives, both the HTML and the plain text versions are sent together in a single multipart email.
+
+    The recipient’s email client (like Gmail, Outlook, or Apple Mail) decides which version to display:
+        --> If the client supports HTML, it displays the HTML part
+        --> If not, it falls back to the plain text part
+
+----------------------------------------------------------------------------------------------------------------
+
+So both text and html is sent to the user email:
+
+    email = EmailMultiAlternatives(subject, text_content, from_email, to_email)
+    email.attach_alternative(html_content, 'text/html')
+
+    -- at first we attached text_content 
+    -- then we also attached the html_content so if html is supported, it will be shown
+
+    As it is MultiAlternative, we can send html and text both together.
+
+----------------------------------------------------------------------------------------------------------------
+
+After this, we will be sending the email that we have through thread:
+
+    SendEmailThread(email).start()
+
+    This class is defined as:
+        class SendEmailThread(threading.Thread):
+            def __init__(self, email):
+                self.email = email
+                threading.Thread.__init__(self)
+                
+            def run(self):
+                self.email.send()
+
+    At first when the class is called by passing the email object, it will:
+        --> set the email in the class using self.email = email for that particular instance.
+        --> initialize the thread for that particular object
+
+    The start() method will start the thread and calls the run() method.  
+
+    Inside of the run method, we will be calling the send() method for sending the email.
+    This will then send the mail to the recipient user.
+
+----------------------------------------------------------------------------------------------------------------
+
+During the generation of the activation_link which is generated using the uid and thread made on the basis of the user, we need to provide one url for the specific view in which the user will be redirected into from the services like Gmail Apple mail or others.
+
+    For that make one url in the urls.py file for calling the view:
+            path('activate/<str:uidb64>/<str:token>', views.activate_account, name="activate"),
+
+    After hitting this URL, activate_account function will be called and see if the uid and the token is for the user or not by decoding it.
+
+    It will check the user in the database again and confirm the user.
+
+    If everything is correct, it will activate the user's account.
+
+    Here    uid is used to check if it is for the user or not.
+            token is used for the case where it is to be seen if the expiration time of token is completed.
+
+----------------------------------------------------------------------------------------------------------------
+
+During the definition of view above:
+
+    --> Decode the uid that is received:
+            As we made the uid based on user id, decoding it will provide the pk/id of the user
+                uid = force_str(urlsafe_base64_decode(uidb64)) 
+
+    --> Get user based on decoded uid:
+            user = User.objects.get(pk = uid)
+
+    --> Check if user is already active. If yes prompt that to the user:
+            if user.is_active():
+                messages.warning(request, "The account has already been active.")
+                return redirect('login')
+
+    --> Check if the token is expired or not:
+            We made the token based on the user, so to check the token, we need compare between user and token.
+            If the same data, it will return true
+
+            if default_token_generator.check_token(user, token):
+                user.is_active = True
+                user.save()
+                messages.success(request, "Your account has been activated successfully!!")
+                return redirect('login')
+            else:
+                messages.error(request, "The activation link is invalid or is expired")
+                return redirect('login')
+----------------------------------------------------------------------------------------------------------------
+
+So where will we get the mail that the system is going to send to the user?
+
+    We can use the services like Gmail for this
+    But we will be using ""mail trap"" for out case
+
+    Here for learning purpose, it is good because we can send 1000 mails per month.
+
+    Sign up in mail trap for that and create an account.
+
+    Then login into the account and fill up some questions.
+
+    Go to Email API/SMTP and go to Demo Domain.
+    This will provide us with the demo domain. For that go to Transactional Stream -- INtegrate
+    Go to the SMTP section
+    Choose Python -- Django 
+    Then copy the code that is provided to you
+    Copy that configuration using copy button (so the real password will get copied and not ****)
+    It will look something like this:
+
+        EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+        EMAIL_HOST = 'live.smtp.mailtrap.io'
+        EMAIL_HOST_USER = 'api'
+        EMAIL_HOST_PASSWORD = 'your_password_here'
+        EMAIL_PORT = '587'
+        EMAIL_USE_TLS = True
+
+    Copy this code in settings.py file 
+
+    You can use env file for the password
+----------------------------------------------------------------------------------------------------------------
+
+If we are using the mailtrap demo version, we cannot send the email to all the user.
+Only the user that is logged in to that specific domain for th hostname and the password can only receive the email.
+
+So if you signed in as the mail your_mail@example.com, this mail will only receive the mail and other can receive it.
+
+So the sender will be 
+    demomailtrap.com
+
+And the user can be 
+    your_mail@example.com
+
+If we see the Sending Domain tab, we can see demomailtrap.com in there. 
+So this will only send the mail to the user.
+
+We can also add our domain in there by configuring DNS and other things.
+
+----------------------------------------------------------------------------------------------------------------
+
+Copy the domain that is provided by mailtrap.
+
+    That domain is to be inserted in from_email of send_activation_email function
+
+        from_email = 'no_reply@demomailtrap.com'
+
+----------------------------------------------------------------------------------------------------------------
+
+To see if this is working or not, we need to register using the mail that is used for registering in the mailtrap.
+
+After filling up the registration form, we would be redirected to the login page and message will show up to see the mail for the activation link.
+
+Then after clicking the mail activation link, our account will get activated and then we will be redirected to the login page.
+
+For the link which will redirect us back to the login page, we need to attach a link in the href.
+    <a href={{activation_url}}>Activation Link</a>
+
+    This link will call the view ""activation_account "" inside of the account function.
+
+This will activate the account by ""setting is_active to be True""
+
+Then the user will be able to login into the account.
+----------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------

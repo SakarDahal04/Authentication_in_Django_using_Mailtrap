@@ -1,0 +1,66 @@
+After the User model has been created, we need to shift from the admin panel to the form that we will showing in the frontend.
+
+For that a Model Form is to be made.
+
+For that create forms.py file.
+Import the User model from which we will make the RegistrationForm.
+
+As we will be using the model form we will inherit from django.forms.ModelForm
+
+------------------------------------------------------------------------------------------------
+
+As we didn't define password and confirm_password inside of the model, we will make the fields for that separately.
+
+The password field is there in the model that we inherit from that is ""AbstractBaseUser""
+
+So when the password is obtained from the frontend, it will go and set in the password fields from there.
+
+------------------------------------------------------------------------------------------------
+
+Inside of the forms Meta class, we define the model and fields.
+
+clean() method is defined to check if the password sent during registration matches.
+
+clean_email() to check if the email already exists and same email is used for registering as new user.
+
+These methods will automatically get called when the form is submitted for the whole form validation and the field validation.
+
+------------------------------------------------------------------------------------------------
+
+Inside of the template, register.html, we provide "value" field inside the input and also provide the form errors case.
+
+------------------------------------------------------------------------------------------------
+
+After this we define the views for the register.
+
+We handle both GET and POST request cases. 
+
+We hash the password and save it in the database.(using set_password method which is defined inside AbstractBaseUser)
+
+We also ""send the message to the frontend"". If any received it will be shown before the main which is mentioned in base.html
+
+The clean() and clean_email() will be called automatically when the form is submitted.
+If the error occurs, it will be shown in the form for the user
+
+------------------------------------------------------------------------------------------------
+
+We made some changes here.
+
+When a user is created at the first after registration, they will be customer. If that is to be updated for settings user as a seller, staff can login in the admin panel and change that functionality.
+
+So seller will be on demand after the request to the staff by customer after proper verification.
+
+------------------------------------------------------------------------------------------------
+
+Error that I encountered:
+
+The password and confirm_password being different also passed the user to the database creating a new user.
+
+The problem was I defined clean() and clean_email() inside of the Meta class.
+
+Meta class of the form is only for the information like model, fields, widgets, labels, help_texts and other
+
+Methods should be mentioned outside of the Meta class
+
+------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------

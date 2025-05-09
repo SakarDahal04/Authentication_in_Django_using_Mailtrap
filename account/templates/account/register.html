@@ -1,0 +1,78 @@
+{% extends "account/base.html" %}
+
+{% load static %}
+
+{% block title %}Register{% endblock title %}
+
+{% block content %}
+    <div class="d-flex align-items-center justify-content-center px-2 py-4">
+        <div>
+            <h2 class="text-center">Create an Account</h2>
+            <form action="{% url "register" %}" method="POST" class="p-3" novalidate>
+                {% csrf_token %}
+
+                <!--Name Field-->
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" value="{{form.name.value|default:''}}" class="form-control" name="name" id="name" aria-describedby="nameHelo" placeholder="Enter name" required>
+                    {% if form.name.errors %}
+                        <div class="text-danger">
+                            {% for error in form.name.errors %}
+                                <p> {{error}} </p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!--Email Field-->
+                <div class="form-group">
+                    <label for="email">Email address</label>
+                    <input type="email" value="{{form.email.value|default:''}}" class="form-control" name="email" id="email" aria-describedby="emailHelp" placeholder="Enter email" required>
+                    {% if form.email.errors %}
+                        <div class="text-danger">
+                            {% for error in form.email.errors %}
+                                <p> {{error}} </p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!--Password Field-->
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" class="form-control" name="password" id="password" aria-describedby="passwordHelp" placeholder="Enter password" required>
+                    {% if form.password.errors %}
+                        <div class="text-danger">
+                            {% for error in form.password.errors %}
+                                <p> {{error}} </p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!--Confirm Password Field-->
+                <div class="form-group">
+                    <label for="confirm_password">Confirm Password</label>
+                    <input type="password" class="form-control" name="confirm_password" id="confirm_password" aria-describedby="confirm_passwordHelp" placeholder="Confirm password" required>
+                    {% if form.confirm_password.errors %}
+                        <div class="text-danger">
+                            {% for error in form.confirm_password.errors %}
+                                <p> {{error}} </p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!--Register button-->
+                <button type="submit" class="btn btn-danger">Register</button>
+
+                <hr><hr>
+
+                <!--Login Link-->
+                <div class="text-center">
+                    <p>Existing user? <a href="{% url "login" %}" class="text-danger">Login Now</a></p>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock content %}

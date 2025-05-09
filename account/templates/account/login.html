@@ -1,0 +1,42 @@
+{% extends "account/base.html" %}
+
+{% load static %}
+
+{% block title %}Login{% endblock title %}
+
+{% block content %}
+    <div class="d-flex align-items-center justify-content-center px-2 py-4">
+        <div>
+            <h2 class="text-center">Login to an Account</h2>
+            <form action="{% url "login" %}" method="POST" class="p-3" novalidate>
+                {% csrf_token %}
+
+                <!--Email Field-->
+                <div class="form-group">
+                    <label for="email">Email address</label>
+                    <input type="email" name="email" class="form-control" id="email" aria-describedby="emailHelp" placeholder="Enter email">
+                </div>
+
+                <!--Password Field-->
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" name="password" class="form-control" id="password" aria-describedby="passwordHelp" placeholder="Enter password">
+                </div>
+
+                <div class="text-right">
+                    <a href="{% url "password_reset" %}" class="text-sm">Forgot Password?</a>
+                </div>
+
+                <!--Login button-->
+                <button type="submit" class="btn btn-danger">Login</button>
+
+                <hr><hr>
+
+                <!--Login Link-->
+                <div class="text-center">
+                    <p><a href="{% url "register" %}" class="text-danger">Create an account</a></p>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock content %}

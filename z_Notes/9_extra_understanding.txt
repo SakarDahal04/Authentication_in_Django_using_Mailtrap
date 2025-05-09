@@ -1,0 +1,42 @@
+django.contrib package:
+
+Unlike something like django.forms, which is focused on a single responsibility (i.e., handling forms), django.contrib is more like a toolbox of independent, pre-built apps. It doesn't serve one unified purpose — instead, it:
+
+    Provides a collection of """optional, reusable apps""" that help you build features faster.
+
+So instead of "one job", django.contrib gives you:
+    An admin interface (admin)
+    User authentication (auth)
+    Session handling (sessions)
+    Messaging system (messages)
+    Static file management (staticfiles)
+    and much more...
+
+Each of these is modular — you can include only what you need in INSTALLED_APPS.
+
+✅ The real benefit?
+You don't have to write common features from scratch. These apps:
+    - Are secure
+    - Are well-tested
+    - Integrate smoothly with Django’s core
+    - Save a ton of development time
+
+django.contrib is like Django saying:
+    “Here are some ready-made mini-apps we’ve built for you. Use whatever fits your project.”
+
+------------------------------------------------------------------------------------------------
+
+When we make the User model by inheriting the AbstractBaseUser, this provides the fields like
+    - password
+    - last_login
+
+    and different methods like:
+        - .set_password(raw_password)
+        - .check_password(raw_password)
+
+    for fields like is_authenticated and is_anoynomous:
+        - These are provided by django.contrib.auth.models.Anoynomous and UserMixin and they are the part of the authentication system.
+
+        - Even if we make the custom user model inheriting from the AbstractBaseUser, Django expects is_authenticated to be present, so it adds via mixins and middlewares.
+
+        - These are not methods, but properties that always return True for actual users and False for anonymous users.

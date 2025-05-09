@@ -1,0 +1,90 @@
+If the user is already logged in:
+
+During the calling of the login page, it will see if the user is already logged in.
+If the user is logged in, we check if the user is authenticated or not. 
+
+If the user is authenticated:
+    --> if user is seller   -- seller dashboard
+    --> if user is customer -- customer dashboard
+    --> otherwise           -- home
+
+    If not authenticated:
+        redirect to login page
+
+--------------------------------------------------------------------------------------------------------
+
+But if the POST request is sent after entering of the email and password:
+    Then we get the email and password from the request
+
+    If email and password is not sent, then we raise error. This error is provided by the forms but just in case.
+
+    On the basis of the obtained email, we get the user.
+
+    If the error occurs for the user not being in the database, tell Invalid Email or Password field.
+        DO NOT tell the user doens't exist
+        This may be the way for the hackers to see if the users are registered to the specific websites.
+
+--------------------------------------------------------------------------------------------------------
+
+Now for the case where the user is inactive
+    If the user is inactive, we send the message saying the user is not active and activate the account first
+
+--------------------------------------------------------------------------------------------------------
+
+Now we will write the code for the authentication.
+    For that we import authenticate and login
+
+        from django.contrib.auth import authenticate, login
+
+    Then we pass the email and password to the authentication function.
+
+        authenticate(request, email=email, password=password)
+
+    If the user is authenticated then we will login the user
+        login(request, user)
+
+    Inside the same case we check for the case if user if seller or customer.
+    On that basic the dashboard are shown.
+
+    This is different from above case because
+        In above case, we send the user to the dashboard if they are already logged in without showing them login page
+
+        But in this case, login is done at first and then only the user is transferred to the dashboard.
+        
+--------------------------------------------------------------------------------------------------------
+
+So now when we enter the email and password, the user will be logged in:
+    For seller -- seller dashboard
+    For customer -- customer dashboard
+    For both seller and customer -- seller dashboard
+
+--------------------------------------------------------------------------------------------------------
+
+For the logout of the user, we need to import LogoutView in our urls
+
+        from django.contrib.auth.views import LogoutView
+
+    The we mention the path for the logout/
+
+        path('logout/', LogoutView.as_view(), name="logout"),
+
+    In the base.html file we have logout button. This is done on the basis of form.
+    It is considered good way for logging out in django.
+
+        <form action="{% url "logout" %}" method="POST">
+            {% csrf_token %}
+            <button class="btn btn-danger" type='submit'>Logout</button>
+        </form>
+
+    Doing this we will be redirected back to the logout page of the admin.
+    This will cause ver big PROBLEM.
+    It should have redirected back to the login pafe
+
+    To fix this problem, we mention LOGOUT_REDIRECT_PATH in settings.py file
+        LOGOUT_REDIRECT_URL = 'login'
+
+    So all the functionality of the LogoutUser will be carried out, but when we redirect to the page at the end, it will redirect us back to the login page.
+--------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------
